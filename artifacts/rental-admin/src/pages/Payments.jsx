@@ -4,6 +4,7 @@ import { L, useLang } from "../i18n.jsx";
 import Modal from "../components/Modal.jsx";
 import { useToast } from "../components/Toast.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
+import { CreditCard, Plus, Pencil, Trash2, Inbox, Sparkles } from "lucide-react";
 
 function thisMonth() {
   const d = new Date();
@@ -24,8 +25,7 @@ export default function Payments() {
     const q = new URLSearchParams();
     if (filterMonth) q.set("month", filterMonth);
     if (filterStatus) q.set("status", filterStatus);
-    const data = await api.get(`/api/payments?${q.toString()}`);
-    setList(data);
+    setList(await api.get(`/api/payments?${q.toString()}`));
   };
   useEffect(() => { load(); }, [filterMonth, filterStatus]);
   useEffect(() => { api.get("/api/shops").then(setShops); }, []);
@@ -44,11 +44,8 @@ export default function Payments() {
     if (row) {
       setEditing(row);
       setForm({
-        amountDue: row.amountDue,
-        amountPaid: row.amountPaid,
-        paidOn: row.paidOn || "",
-        method: row.method || "",
-        note: row.note || "",
+        amountDue: row.amountDue, amountPaid: row.amountPaid,
+        paidOn: row.paidOn || "", method: row.method || "", note: row.note || "",
       });
     } else {
       setEditing(null);
@@ -60,22 +57,16 @@ export default function Payments() {
     try {
       if (editing && editing._id) {
         await api.put(`/api/payments/${editing._id}`, {
-          amountDue: Number(form.amountDue),
-          amountPaid: Number(form.amountPaid),
-          paidOn: form.paidOn || null,
-          method: form.method || null,
-          note: form.note || null,
+          amountDue: Number(form.amountDue), amountPaid: Number(form.amountPaid),
+          paidOn: form.paidOn || null, method: form.method || null, note: form.note || null,
         });
       } else {
         const shop = shops.find((s) => s._id === form.shopId);
         await api.post("/api/payments", {
-          shopId: form.shopId,
-          month: form.month,
+          shopId: form.shopId, month: form.month,
           amountDue: Number(form.amountDue || shop?.monthlyRent || 0),
           amountPaid: Number(form.amountPaid),
-          paidOn: form.paidOn || null,
-          method: form.method || null,
-          note: form.note || null,
+          paidOn: form.paidOn || null, method: form.method || null, note: form.note || null,
         });
       }
       toast.show(t("saved")); close(); load();
@@ -86,22 +77,26 @@ export default function Payments() {
     try { await api.del(`/api/payments/${row._id}`); toast.show(t("deleted")); load(); }
     catch (e) { toast.show(e.message, "error"); }
   };
-
   const generateMonthly = async () => {
     try {
       const r = await api.post("/api/payments/generate-monthly", { month: filterMonth });
-      toast.show(`Generated ${r.created}`);
-      load();
+      toast.show(`${r.created} created`); load();
     } catch (e) { toast.show(e.message, "error"); }
   };
+
+  const totalDue = list.reduce((s, p) => s + p.amountDue, 0);
+  const totalPaid = list.reduce((s, p) => s + p.amountPaid, 0);
 
   return (
     <div>
       <div className="page-header">
-        <h2 className="page-title"><L k="payments" /></h2>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-secondary" onClick={generateMonthly}><L k="generateMonthly" /></button>
-          <button className="btn btn-primary" onClick={() => open(null)}>+ <L k="recordPayment" /></button>
+        <div>
+          <h2 className="page-title"><CreditCard size={22} /> <L k="payments" /></h2>
+          <div className="page-sub">{fmtBDT(totalPaid)} / {fmtBDT(totalDue)} · {list.length} records</div>
+        </div>
+        <div className="page-actions">
+          <button className="btn btn-secondary" onClick={generateMonthly}><Sparkles size={15} /> <L k="generateMonthly" /></button>
+          <button className="btn btn-primary" onClick={() => open(null)}><Plus size={15} /> <L k="recordPayment" /></button>
         </div>
       </div>
 
@@ -120,39 +115,41 @@ export default function Payments() {
 
       <div className="card">
         {list.length === 0 ? (
-          <div className="empty"><L k="noData" /></div>
+          <div className="empty"><Inbox size={40} /><L k="noData" /></div>
         ) : (
-          <table>
-            <thead>
-              <tr>
-                <th><L k="month" /></th>
-                <th><L k="shop" /></th>
-                <th><L k="tenant" /></th>
-                <th style={{ textAlign: "right" }}><L k="amountDue" /></th>
-                <th style={{ textAlign: "right" }}><L k="amountPaid" /></th>
-                <th><L k="status" /></th>
-                <th><L k="paidOn" /></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((p) => (
-                <tr key={p._id}>
-                  <td>{fmtMonth(p.month)}</td>
-                  <td style={{ fontWeight: 600 }}>{p.shop?.code || "-"}</td>
-                  <td>{p.tenant?.name || "-"}</td>
-                  <td style={{ textAlign: "right" }}>{fmtBDT(p.amountDue)}</td>
-                  <td style={{ textAlign: "right", fontWeight: 500, color: p.amountPaid >= p.amountDue ? "var(--success)" : "var(--text)" }}>{fmtBDT(p.amountPaid)}</td>
-                  <td><StatusBadge status={p.status} /></td>
-                  <td className="muted">{p.paidOn || "-"}</td>
-                  <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => open(p)}><L k="edit" /></button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => del(p)} style={{ color: "var(--danger)" }}><L k="delete" /></button>
-                  </td>
+          <div style={{ overflowX: "auto" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th><L k="month" /></th>
+                  <th><L k="shop" /></th>
+                  <th><L k="tenant" /></th>
+                  <th style={{ textAlign: "right" }}><L k="amountDue" /></th>
+                  <th style={{ textAlign: "right" }}><L k="amountPaid" /></th>
+                  <th><L k="status" /></th>
+                  <th><L k="paidOn" /></th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {list.map((p) => (
+                  <tr key={p._id}>
+                    <td>{fmtMonth(p.month)}</td>
+                    <td><span className="shop-code-pill">{p.shop?.code || "-"}</span></td>
+                    <td>{p.tenant?.name || "-"}</td>
+                    <td style={{ textAlign: "right" }}>{fmtBDT(p.amountDue)}</td>
+                    <td style={{ textAlign: "right", fontWeight: 600, color: p.amountPaid >= p.amountDue ? "var(--success)" : (p.amountPaid > 0 ? "var(--warning)" : "var(--danger)") }}>{fmtBDT(p.amountPaid)}</td>
+                    <td><StatusBadge status={p.status} /></td>
+                    <td className="muted" style={{ fontSize: 13 }}>{p.paidOn || "-"}</td>
+                    <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                      <button className="btn btn-ghost btn-icon" title={t("edit")} onClick={() => open(p)}><Pencil size={15} /></button>
+                      <button className="btn btn-ghost btn-icon" title={t("delete")} onClick={() => del(p)} style={{ color: "var(--danger)" }}><Trash2 size={15} /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
@@ -166,7 +163,7 @@ export default function Payments() {
           </>}
         >
           {(!editing || !editing._id) && (
-            <>
+            <div className="grid grid-2">
               <div className="field">
                 <label className="label"><L k="shop" /></label>
                 <select value={form.shopId} onChange={(e) => {
@@ -185,7 +182,7 @@ export default function Payments() {
                   {months.map((m) => <option key={m} value={m}>{fmtMonth(m)}</option>)}
                 </select>
               </div>
-            </>
+            </div>
           )}
           <div className="grid grid-2">
             <div className="field">

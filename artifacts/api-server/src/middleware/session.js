@@ -2,7 +2,7 @@ import crypto from "crypto";
 
 const SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
 const COOKIE = "rental_sess";
-const MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
+const MAX_AGE = 1000 * 60 * 60 * 24 * 7;
 
 function sign(data) {
   return crypto.createHmac("sha256", SECRET).update(data).digest("hex");
@@ -38,9 +38,7 @@ export function readSession(req) {
 
 export function requireAuth(req, res, next) {
   const session = readSession(req);
-  if (!session) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
+  if (!session) return res.status(401).json({ error: "Not authenticated" });
   req.user = session;
   next();
 }
