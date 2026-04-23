@@ -1,27 +1,35 @@
-# Workspace
+# Dokan Bhara — Shop Rental Manager
 
-## Overview
+Bilingual (Bangla / English) shop rental management web app for small landlords in Bangladesh.
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+## Demo login
+- Username: `admin`
+- Password: `admin123`
+
+## Artifacts
+- `artifacts/rental-admin` — React + Vite frontend (path `/`)
+- `artifacts/api-server` — Express API backend (path `/api`)
 
 ## Stack
+- React + Vite + TanStack Query + shadcn/ui + Recharts
+- Express + Drizzle ORM + PostgreSQL
+- HMAC-signed cookie session (`SESSION_SECRET`)
+- OpenAPI spec → orval-generated typed client + Zod validators
 
-- **Monorepo tool**: pnpm workspaces
-- **Node.js version**: 24
-- **Package manager**: pnpm
-- **TypeScript version**: 5.9
-- **API framework**: Express 5
-- **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+## Key paths
+- API spec: `lib/api-spec/openapi.yaml`
+- DB schema: `lib/db/src/schema/index.ts`
+- Backend routes: `artifacts/api-server/src/routes/`
+- Frontend pages: `artifacts/rental-admin/src/pages/`
+- i18n provider: `artifacts/rental-admin/src/lib/i18n.tsx` (modes: `bn` / `en` / `both`)
+- Seed script: `scripts/src/seed-rental.ts` — run with `pnpm --filter @workspace/scripts run seed-rental`
 
-## Key Commands
-
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
-
-See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+## Features
+- Dashboard summary (occupied/vacant shops, expected/collected/outstanding rent)
+- Tenants CRUD with NID, phone, address, notes
+- Shops CRUD with location, size, monthly rent, deposit, lease assignment
+- Monthly payment tracking with paid / unpaid / partial status
+- Generate-monthly: bulk-creates payment records for all occupied shops
+- Reports: monthly collection chart, occupancy donut, top tenants
+- Bilingual labels everywhere; Bangla numerals for currency; Noto Sans Bengali font
+- Mobile-responsive sidebar nav (Dashboard, Tenants, Shops, Payments, Reports, Settings)
